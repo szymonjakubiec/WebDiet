@@ -58,6 +58,10 @@ img {
   gap: 16px;
 }
 
+.main {
+  padding: 0 3px;
+}
+
 .percentage {
   width: 7%;
 }
@@ -81,9 +85,9 @@ progress::-moz-progress-bar {
   background-color: #fea510;
 }
 
-.progress-bar {
-  width: 50%;
-}
+/* .progress-bar { */
+/*   width: 50%; */
+/* } */
 
 .time-spent {
   width: 14%;
