@@ -1,0 +1,94 @@
+/* 
+#37373f - main gray
+#434343 - lighter gray
+#3787cd - blue
+#f0ebe9 - white
+#e13946 - red
+#fea510 - orange
+*/
+
+html {
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body, h1, h2, h3, h4, h5, h6, p, ol, ul {
+  margin: 0;
+  padding: 10px;
+  font-weight: normal;
+  
+  color: #f0ebe9;
+}
+body {
+  width: 450px;
+  height: 250px;
+  background-color: #37373f;
+}
+
+ol, ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  width: 32px; /* potem dać img wlk. 32x32px */
+  height: auto;
+}
+
+.element {
+  display: flex;
+  font-size: 14px;
+  /* gap: 15px; */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ldBar {
+  data-value: 87;
+  width: 50%;
+}
+
+#list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.main {
+  padding: 0 3px;
+}
+
+.percentage {
+  width: 9%;
+}
+
+progress {
+  background-color: #000;
+  -webkit-appearance: none;
+  height: 3px;
+  width: 50%;
+  margin-bottom: auto;
+  margin-top: auto;
+}
+
+progress::-webkit-progress-bar {
+  background-color: #000;
+}
+progress::-webkit-progress-value {
+  background-color: #fea510;
+}
+progress::-moz-progress-bar {
+  background-color: #fea510;
+}
+
+/* .progress-bar { */
+/*   width: 50%; */
+/* } */
+
+.time-spent {
+  width: 16%;
+}   
