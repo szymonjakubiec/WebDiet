@@ -86,7 +86,6 @@ function addWebsite(){
 
 /**
  * Gets websites array from DB .
- * @param db
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if(request.greeting === "getWebsites"){

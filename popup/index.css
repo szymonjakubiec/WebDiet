@@ -72,7 +72,8 @@ progress {
   height: 3px;
   width: 50%;
   margin-bottom: auto;
-  margin-top: auto;
+  /* margin-top: auto; */
+  margin-top: 17px;
 }
 
 progress::-webkit-progress-bar {
@@ -89,6 +90,11 @@ progress::-moz-progress-bar {
 /*   width: 50%; */
 /* } */
 
+.site-name {
+  position: absolute;
+  transform: translate(60px, -10px);
+}
+
 .time-spent {
-  width: 16%;
+  width: 20%;
 }   

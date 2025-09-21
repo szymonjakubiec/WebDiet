@@ -20,7 +20,10 @@ function showAllWebsites(websiteList) {
   let websitesNumber = websiteList.length;
   let li = "";
   
+  
   for (let i = 0; i < websitesNumber; i++) {
+    let name = websiteList[i].name;
+    
     let tempTS = websiteList[i].spentTime.split(":")
     let timeSpent = Number(tempTS[0])*3600 + Number(tempTS[1])*60 + Number(tempTS[2])
 
@@ -34,6 +37,9 @@ function showAllWebsites(websiteList) {
     li += `
     <li>
       <div class="element">
+        <div class="site-name">
+          ${name}
+        </div>
         <img src="../img/icon16.png" alt="web-im">
         <progress min="0" max="100" value="${percentage}"></progress>
         <div class="time-spent">
