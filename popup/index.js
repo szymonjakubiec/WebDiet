@@ -5,7 +5,7 @@ requestAllWebsites();
  * @returns {Promise<void>}
  */
 async function requestAllWebsites(){
-  let response = await chrome.runtime.sendMessage({greeting: "getWebsites"});
+  let response = await chrome.runtime.sendMessage({greeting: "getAllWebsites"});
   await showAllWebsites(response.result);
 }
 
