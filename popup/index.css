@@ -45,6 +45,7 @@ img {
   /* gap: 15px; */
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .ldBar {
@@ -59,7 +60,27 @@ img {
 }
 
 .main {
-  padding: 0 3px;
+  padding: 0 11px 0 3px;
+  overflow-y: scroll;
+  height: 200px;
+  
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #37373f #434343;
+}
+
+/* The rest */
+.main::-webkit-scrollbar {
+  width: 5px;
+}
+
+.main::-webkit-scrollbar-track {
+  background: #37373f;
+}
+
+.main::-webkit-scrollbar-thumb {
+  background-color: #434343;
+  border-radius: 10px;
 }
 
 .percentage {

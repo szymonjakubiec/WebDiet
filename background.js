@@ -159,7 +159,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       query.onsuccess = () => {
         websiteList = query.result;
-        console.log("getAllWebsites", query.result);
+        // console.log("getAllWebsites", query.result);
         sendResponse({result: query.result});
       }
       query.onerror = (event) => {
