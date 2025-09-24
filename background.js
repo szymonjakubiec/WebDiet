@@ -1,6 +1,8 @@
 let db;
-let currentDomain = "", previousDomain = "";
+let currentLabel = "", previousLabel = "";
 let websiteList;
+
+
 /**
  * Gets label of domain name from given url.
  * @param url
@@ -33,22 +35,6 @@ function getOriginUrl(url){
     return null;
   }
 }
-
-function getWebsite(){
-  chrome.tabs.query({currentWindow: true, active: true}//, 
-    // function(tabs){
-    // let activeTab = tabs[0];
-    // console.log(activeTab.url);
-    // // let activeTabId = activeTab.id;
-    // return activeTab.url;
-//}
-  ).then((tabs) => {
-    previousDomain = currentDomain;
-    currentDomain = tabs[0].url;
-    console.log(currentDomain);
-  });
-}
-
 
 
 /**
@@ -92,19 +78,23 @@ function createDB(){
       reject(event.target.error);
     }
   })
-  
 }
 
+/**
+ * Checks if the new domain has changed, adds it to DB if it does not already exist there. Then refreshes popup websites list. 
+ * @param newDomain
+ * @param newLabel
+ * @returns {Promise<void>}
+ */
+async function handleNewDomain(newDomain, newLabel){
+  if(isLabelChanged(newLabel)){
+    currentLabel = newLabel;
 
-function handleNewDomain(newDomain, newLabel){
-  if(isDomainChanged(newDomain)){
-    currentDomain = newDomain;
-
-    // if newDomain is not in visitedWebsitesList DB add it there
-    if(!websiteList.includes(newDomain)){
-      addWebsite(newDomain, newLabel);
-      websiteList.push(newDomain);
+    // if newLabel is not in visitedWebsitesList DB add it there
+    if(!websiteList.some(w => w.name === newLabel)){
+      await addWebsite(newDomain, newLabel);
       console.log(websiteList);
+      await chrome.runtime.sendMessage({action: "showAllWebsites", data: websiteList});
     }
     else{
       //get already existing website
@@ -114,35 +104,34 @@ function handleNewDomain(newDomain, newLabel){
 
 
 /**
- * Checks if the new domain is different from the currently held one.
- * @param newDomain
+ * Checks if the new label is different from the currently held one.
+ * @param newLabel
  */
-function isDomainChanged(newDomain){
-  if (newDomain == null) return false;
+function isLabelChanged(newLabel){
+  if (newLabel == null) return false;
 
-  return newDomain !== currentDomain;
+  return newLabel !== currentLabel;
 }
 
-//put website data as an arg?
+
 /**
  * Adds website into DB.
  */
 function addWebsite(newDomain, newLabel){
+  const newWebsite = {
+    name: newLabel,
+    url: newDomain,
+    spentTime: "00:00:00",
+    limitEnabled: false,
+    limitTime: "00:00:00",
+  }
   const request = db.transaction("visitedWebsitesList", "readwrite")
     .objectStore("visitedWebsitesList")
-    .add([
-      {
-        name: newLabel,
-        url: newDomain,
-        spentTime: "00:00:00",
-        limitEnabled: false,
-        limitTime: "00:00:00",
-      }
-    ]);
-
+    .add(newWebsite);
+  
   request.onsuccess = (event) => {
     console.log(`New website added: ${event.target.result}`);
-
+    websiteList.push(newWebsite);
   };
   request.onerror = (event) => {
     console.error(`addWebsite error: ${event.target.error?.message}`);
@@ -161,7 +150,7 @@ function addWebsite(newDomain, newLabel){
  * Gets websites array from DB .
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if(request.greeting === "getAllWebsites"){
+  if(request.action === "getAllWebsites"){
     createDB().then((db) => {
       const query = db.transaction("visitedWebsitesList", "readwrite")
         .objectStore("visitedWebsitesList")
@@ -170,11 +159,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       query.onsuccess = () => {
         websiteList = query.result;
-        // console.log("getWebsiteListQuery", query);
+        console.log("getAllWebsites", query.result);
         sendResponse({result: query.result});
       }
       query.onerror = (event) => {
-        console.error(`getWebsiteListQuery error: ${event.target.error?.message}`);
+        console.error(`getAllWebsites error: ${event.target.error?.message}`);
         sendResponse({result: []});
       }
     }).catch((error) => {
@@ -183,20 +172,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
-
-
-// chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-//   console.log(`tabId: ${tabId}`);
-//   console.log(`changeInfo: ${changeInfo.url}`);
-//   getLabel();
-//   if (changeInfo.url) {
-//     if (currentDomain.url) {
-//       if (changeInfo.url !== currentDomain.url) {
-//        
-//       }
-//     }
-//   }
-// })
 
 
 /**

@@ -5,7 +5,7 @@ requestAllWebsites();
  * @returns {Promise<void>}
  */
 async function requestAllWebsites(){
-  let response = await chrome.runtime.sendMessage({greeting: "getAllWebsites"});
+  let response = await chrome.runtime.sendMessage({action: "getAllWebsites"});
   await showAllWebsites(response.result);
 }
 
@@ -16,7 +16,7 @@ async function requestAllWebsites(){
  */
 function showAllWebsites(websiteList) {
   console.log(websiteList);
-  let ul = document.getElementById("list");
+  let divMain = document.getElementsByClassName("main")[0];
   let websitesNumber = websiteList.length;
   let li = "";
   
@@ -51,7 +51,7 @@ function showAllWebsites(websiteList) {
       </div>
     </li>`
   }
-  ul.innerHTML = `<ul id="list"> ${li} </div>`
+  divMain.innerHTML = `<ul id="list"> ${li} </ul>`
 }
 
 
@@ -61,3 +61,10 @@ function showAllWebsites(websiteList) {
 
 
 
+/* =====================================  listeners ===================================== */
+
+chrome.runtime.onMessage.addListener((request) => {
+  if (request.action === "showAllWebsites"){
+    showAllWebsites(request.data);
+  }
+})
