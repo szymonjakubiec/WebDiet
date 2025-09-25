@@ -1,5 +1,9 @@
+import {computeSpentTimeRatio} from "../extras/utils.js";
+
+
+
 let db;
-let currentLabel = "", previousLabel = "";
+let currentLabel = "";
 let websiteList;
 
 
@@ -38,7 +42,8 @@ function getOriginUrl(url){
 
 
 /**
- * Create DB for visited websites.
+ * Creates DB for visited websites.
+ * @returns {Promise<unknown>}
  */
 function createDB(){
   return new Promise((resolve, reject) => {
@@ -51,18 +56,29 @@ function createDB(){
 
       objStore.createIndex("name", ["name"], {unique: true});
       objStore.createIndex("url", ["url"], {unique: true});
-      objStore.createIndex("spentTime", ["spentTime"], {unique: false});
       objStore.createIndex("limitEnabled", ["limitEnabled"], {unique: false});
       objStore.createIndex("limitTime", ["limitTime"], {unique: false});
+      objStore.createIndex("spentTime", ["spentTime"], {unique: false});
+      objStore.createIndex("spentTimeRatio", ["spentTimeRatio"], {unique: false});
 
       //add initial websites - for testing
-      objStore.add({name: "youtube", url: "https://www.youtube.com", spentTime: "01:45:00", limitEnabled: false, limitTime: "02:00:00"});
-      objStore.add({name: "netflix", url: "https://www.netflix.com", spentTime: "00:15:00", limitEnabled: false, limitTime: "00:30:00"});
-      objStore.add({name: "spotify", url: "https://www.spotify.com", spentTime: "00:20:00", limitEnabled: false, limitTime: "00:20:00"});
-      objStore.add({name: "facebook", url: "https://www.facebook.com", spentTime: "00:15:00", limitEnabled: false, limitTime: "00:30:00"});
-      objStore.add({name: "snapchat", url: "https://www.snapchat.com", spentTime: "00:00:00", limitEnabled: false, limitTime: "00:40:00"});
-
-
+      let record;
+      record = {name: "youtube", url: "https://www.youtube.com", limitEnabled: true, limitTime: "02:00:00", spentTime: "01:45:00"}
+      record.spentTimeRatio = computeSpentTimeRatio(record.spentTime, record.limitTime);
+      objStore.add(record);
+      record = {name: "netflix", url: "https://www.netflix.com", limitEnabled: true, limitTime: "00:30:00", spentTime: "00:15:00"}
+      record.spentTimeRatio = computeSpentTimeRatio(record.spentTime, record.limitTime);
+      objStore.add(record);
+      record = {name: "spotify", url: "https://www.spotify.com", limitEnabled: true, limitTime: "00:20:00", spentTime: "00:20:00"}
+      record.spentTimeRatio = computeSpentTimeRatio(record.spentTime, record.limitTime);
+      objStore.add(record);
+      record = {name: "facebook", url: "https://www.facebook.com", limitEnabled: true, limitTime: "00:30:00", spentTime: "00:15:00"}
+      record.spentTimeRatio = computeSpentTimeRatio(record.spentTime, record.limitTime);
+      objStore.add(record);
+      record = {name: "snapchat", url: "https://www.snapchat.com", limitEnabled: false, limitTime: "00:00:00", spentTime: "00:00:00"}
+      record.spentTimeRatio = computeSpentTimeRatio(record.spentTime, record.limitTime);
+      objStore.add(record);
+      
       objStore.transaction.oncomplete = (event) => {
         console.log("Transaction complete");
       }
@@ -79,6 +95,7 @@ function createDB(){
     }
   })
 }
+
 
 /**
  * Checks if the new domain has changed, adds it to DB if it does not already exist there. Then refreshes popup websites list. 
@@ -106,9 +123,11 @@ async function handleNewDomain(newDomain, newLabel){
 /**
  * Checks if the new label is different from the currently held one.
  * @param newLabel
+ * @returns {boolean}
  */
 function isLabelChanged(newLabel){
-  if (newLabel == null) return false;
+  if (newLabel == null) 
+    return false;
 
   return newLabel !== currentLabel;
 }
@@ -116,14 +135,17 @@ function isLabelChanged(newLabel){
 
 /**
  * Adds website into DB.
+ * @param newDomain
+ * @param newLabel
  */
 function addWebsite(newDomain, newLabel){
   const newWebsite = {
     name: newLabel,
     url: newDomain,
-    spentTime: "00:00:00",
     limitEnabled: false,
     limitTime: "00:00:00",
+    spentTime: "00:00:00",
+    spentTimeRatio: computeSpentTimeRatio(this.spentTime, this.limitTime)
   }
   const request = db.transaction("visitedWebsitesList", "readwrite")
     .objectStore("visitedWebsitesList")
@@ -132,10 +154,22 @@ function addWebsite(newDomain, newLabel){
   request.onsuccess = (event) => {
     console.log(`New website added: ${event.target.result}`);
     websiteList.push(newWebsite);
+    websiteList = websiteListSort(websiteList); // chyba usunąć i pytać za każdym razem od strony index.js?
   };
   request.onerror = (event) => {
     console.error(`addWebsite error: ${event.target.error?.message}`);
   };
+}
+
+
+/**
+ * Sorts array of websites by spentTimeRatio.
+ * @param websiteList
+ */
+function websiteListSort(websiteList){
+  websiteList.sort((a, b) => {
+    return a.spentTimeRatio - b.spentTimeRatio;
+  })
 }
 
 
@@ -154,13 +188,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     createDB().then((db) => {
       const query = db.transaction("visitedWebsitesList", "readwrite")
         .objectStore("visitedWebsitesList")
-        .index("url")
-        .getAll();
+        .index("spentTimeRatio")
+        .openCursor(null, "prev");
 
-      query.onsuccess = () => {
-        websiteList = query.result;
-        // console.log("getAllWebsites", query.result);
-        sendResponse({result: query.result});
+      const results = [];
+      query.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor){
+          results.push(cursor.value);
+          cursor.continue();
+        }
+        else{
+          console.log("cursor finished");
+          websiteList = results;
+          sendResponse({result: websiteList});
+        }
       }
       query.onerror = (event) => {
         console.error(`getAllWebsites error: ${event.target.error?.message}`);

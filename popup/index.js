@@ -1,14 +1,18 @@
+import {computeSpentTimeRatio} from "../extras/utils.js";
+
+
+
 requestAllWebsites();
+
 
 /**
  * Sends request message for all websites and then displays them.
  * @returns {Promise<void>}
  */
 async function requestAllWebsites(){
-  let response = await chrome.runtime.sendMessage({action: "getAllWebsites"});
+  const response = await chrome.runtime.sendMessage({action: "getAllWebsites"});
   await showAllWebsites(response.result);
 }
-
 
 
 /**
@@ -16,23 +20,19 @@ async function requestAllWebsites(){
  */
 function showAllWebsites(websiteList) {
   console.log(websiteList);
-  let divMain = document.getElementsByClassName("main")[0];
-  let websitesNumber = websiteList.length;
+  const divMain = document.getElementsByClassName("main")[0];
+  const websitesNumber = websiteList.length;
   let li = "";
   
   
   for (let i = 0; i < websitesNumber; i++) {
-    let name = websiteList[i].name;
-    
-    let tempTS = websiteList[i].spentTime.split(":")
-    let timeSpent = Number(tempTS[0])*3600 + Number(tempTS[1])*60 + Number(tempTS[2])
+    const name = websiteList[i].name;
+    const spentTime = websiteList[i].spentTime;
+    const limitTime = websiteList[i].limitTime;
 
-    let tempTL = websiteList[i].limitTime.split(":")
-    let timeLimit = Number(tempTL[0])*3600 + Number(tempTL[1])*60 + Number(tempTL[2])
-
-    let percentage = Math.floor(timeSpent*100/timeLimit);
-    let timeSpentCut = websiteList[i].spentTime.substring(0,websiteList[i].spentTime.length-3)
-    let timeLimitCut = websiteList[i].limitTime.substring(0,websiteList[i].limitTime.length-3)
+    const percentage = computeSpentTimeRatio(spentTime, limitTime) * 100;
+    const spentTimeCut = spentTime.substring(0, spentTime.length-3);
+    const limitTimeCut = limitTime.substring(0, limitTime.length-3);
 
     li += `
     <li>
@@ -43,10 +43,10 @@ function showAllWebsites(websiteList) {
         <img src="../img/icon16.png" alt="web-im">
         <progress min="0" max="100" value="${percentage}"></progress>
         <div class="time-spent">
-          ${timeSpentCut}/${timeLimitCut}
+          ${spentTimeCut}/${limitTimeCut}
         </div>
         <div class="percentage">
-          ${percentage}%
+          ${percentage >= 0 ? percentage + "%" : "-"}
         </div>
       </div>
     </li>`
@@ -62,6 +62,8 @@ function showAllWebsites(websiteList) {
 
 
 /* =====================================  listeners ===================================== */
+
+
 
 chrome.runtime.onMessage.addListener((request) => {
   if (request.action === "showAllWebsites"){
