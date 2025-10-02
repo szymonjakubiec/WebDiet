@@ -3,27 +3,55 @@ import {computeSpentTimeRatio} from "../extras/utils.js";
 
 
 let db;
-let currentLabel = "";
+let currentDomainName = "";
 let websiteList;
 
 
 /**
- * Gets label of domain name from given url.
+ * Gets domain from given url.
  * @param url
  * @returns {null|string}
  */
-function getLabel(url){
+function getDomain(url){
   try {
     const u = new URL(url);
-    console.log(`url: ${url}`);
-    const origin = u.origin;
-    const label = origin.split(".")[1];
-    return label;
+    return u.hostname;
   } catch (e) {
     console.error(e);
     return null;
   }
 }
+
+
+/**
+ * Gets domain name from given url.
+ * @param url
+ * @returns {null|string}
+ */
+function getDomainName(url){
+  try {
+    const u = new URL(url);
+    const hostname = u.hostname;
+    
+    const arr = hostname.split(".");
+    
+    if (arr.length === 2)
+      return arr[0];
+    
+    if (arr[0] === "www")
+      if (arr[2] === "com")
+        return arr[1];
+      else
+        return `${arr[1]}.${arr[2]}`;
+    else
+      return `${arr[1]} ${arr[0]}`;
+    
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
 
 /**
  * Gets origin from given url.
@@ -100,16 +128,16 @@ function createDB(){
 /**
  * Checks if the new domain has changed, adds it to DB if it does not already exist there. Then refreshes popup websites list. 
  * @param newDomain
- * @param newLabel
+ * @param newDomainName
  * @returns {Promise<void>}
  */
-async function handleNewDomain(newDomain, newLabel){
-  if(isLabelChanged(newLabel)){
-    currentLabel = newLabel;
+async function handleNewDomain(newDomain, newDomainName){
+  if(isDomainNameChanged(newDomainName)){
+    currentDomainName = newDomainName;
 
-    // if newLabel is not in visitedWebsitesList DB add it there
-    if(!websiteList.some(w => w.name === newLabel)){
-      await addWebsite(newDomain, newLabel);
+    // if newDomainName is not in visitedWebsitesList DB add it there
+    if(!websiteList.some(w => w.name === newDomainName)){
+      await addWebsite(newDomain, newDomainName);
       console.log(websiteList);
       await chrome.runtime.sendMessage({action: "showAllWebsites", data: websiteList});
     }
@@ -121,32 +149,33 @@ async function handleNewDomain(newDomain, newLabel){
 
 
 /**
- * Checks if the new label is different from the currently held one.
- * @param newLabel
+ * Checks if the new domain name is different from the currently held one.
+ * @param newDomainName
  * @returns {boolean}
  */
-function isLabelChanged(newLabel){
-  if (newLabel == null) 
+function isDomainNameChanged(newDomainName){
+  if (newDomainName == null) 
     return false;
 
-  return newLabel !== currentLabel;
+  return newDomainName !== currentDomainName;
 }
 
 
 /**
  * Adds website into DB.
  * @param newDomain
- * @param newLabel
+ * @param newDomainName
  */
-function addWebsite(newDomain, newLabel){
+function addWebsite(newDomain, newDomainName){
   const newWebsite = {
-    name: newLabel,
+    name: newDomainName,
     url: newDomain,
     limitEnabled: false,
     limitTime: "00:00:00",
     spentTime: "00:00:00",
-    spentTimeRatio: computeSpentTimeRatio(this.spentTime, this.limitTime)
-  }
+  };
+  newWebsite.spentTimeRatio = computeSpentTimeRatio(newWebsite.spentTime, newWebsite.limitTime);
+  
   const request = db.transaction("visitedWebsitesList", "readwrite")
     .objectStore("visitedWebsitesList")
     .add(newWebsite);
@@ -154,7 +183,7 @@ function addWebsite(newDomain, newLabel){
   request.onsuccess = (event) => {
     console.log(`New website added: ${event.target.result}`);
     websiteList.push(newWebsite);
-    websiteList = websiteListSort(websiteList); // chyba usunąć i pytać za każdym razem od strony index.js?
+    // websiteList = websiteListSort(websiteList); // chyba usunąć i pytać za każdym razem od strony index.js?
   };
   request.onerror = (event) => {
     console.error(`addWebsite error: ${event.target.error?.message}`);
@@ -181,7 +210,7 @@ function websiteListSort(websiteList){
 
 
 /**
- * Gets websites array from DB .
+ * Gets websites array from DB.
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if(request.action === "getAllWebsites"){
@@ -199,7 +228,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           cursor.continue();
         }
         else{
-          console.log("cursor finished");
+          // console.log("cursor finished");
           websiteList = results;
           sendResponse({result: websiteList});
         }
@@ -217,7 +246,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 
 /**
- * Gets url and domain label of currently active tab on active tab change.
+ * Gets url and domain name of currently active tab on active tab change.
  */
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   try {
@@ -228,10 +257,10 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
       let origin = await getOriginUrl(tab.url);
       console.log(`origin: ${origin}`);
 
-      let label = await getLabel(tab.url);
-      console.log(`label: ${label}`);
+      let domainName = await getDomainName(tab.url);
+      console.log(`domainName: ${domainName}`);
 
-      handleNewDomain(origin, label);
+      handleNewDomain(origin, domainName);
     }
   } catch (e) {
     console.error(`error occurred while checking changed active tab: ${e.target.error?.message}`);
@@ -240,7 +269,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
 
 
 /**
- * Gets url and domain label of currently active tab on top-level frame navigation.
+ * Gets url and domain domainName of currently active tab on top-level frame navigation.
  */
 chrome.webNavigation.onCommitted.addListener((details) => {
   if (details.frameId !== 0) return;
@@ -251,16 +280,16 @@ chrome.webNavigation.onCommitted.addListener((details) => {
     let origin = getOriginUrl(details.url);
     console.log(`origin: ${origin}`);
 
-    let label = getLabel(details.url);
-    console.log(`label: ${label}`);
+    let domainName = getDomainName(details.url);
+    console.log(`domainName: ${domainName}`);
 
-    handleNewDomain(origin, label);
+    handleNewDomain(origin, domainName);
   }
 });
 
 
 /**
- * Gets url and domain label of currently active tab on changing focus to other browser window.
+ * Gets url and domain domainName of currently active tab on changing focus to other browser window.
  */
 chrome.windows.onFocusChanged.addListener((windowId) => {
   if (windowId === chrome.windows.WINDOW_ID_NONE) return;
@@ -275,10 +304,10 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
       let origin = getOriginUrl(active.url);
       console.log(`origin: ${origin}`);
 
-      let label = getLabel(active.url);
-      console.log(`label: ${label}`);
+      let domainName = getDomainName(active.url);
+      console.log(`domainName: ${domainName}`);
 
-      handleNewDomain(origin, label);
+      handleNewDomain(origin, domainName);
     }
   });
 });
