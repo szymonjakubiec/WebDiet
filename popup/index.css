@@ -23,11 +23,6 @@ body, h1, h2, h3, h4, h5, h6, p, ol, ul {
   
   color: #f0ebe9;
 }
-body {
-  width: 450px;
-  height: 270px;
-  background-color: #37373f;
-}
 
 ol, ul {
   list-style: none;
@@ -37,6 +32,12 @@ img {
   max-width: 100%;
   width: 32px; /* potem dać img wlk. 32x32px */
   height: auto;
+}
+
+body {
+  width: 450px;
+  height: 320px;
+  background-color: #37373f;
 }
 
 .element {
@@ -60,7 +61,7 @@ img {
 }
 
 .main {
-  padding: 0 11px 0 3px;
+  padding: 0 3px;
   overflow-y: scroll;
   height: 200px;
   
@@ -83,6 +84,22 @@ img {
   border-radius: 10px;
 }
 
+.navbar {
+  display: flex;
+  margin-left: 10px;
+  margin-bottom: 5px;
+}
+
+.navbar-btn {
+  background-color: #37373f;
+  border-radius: 3px;
+  color: #f0ebe9;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding: 7px;
+  flex-grow: 1;
+}
+
 .percentage {
   width: 9%;
 }
@@ -93,7 +110,6 @@ progress {
   height: 3px;
   width: 50%;
   margin-bottom: auto;
-  /* margin-top: auto; */
   margin-top: 17px;
 }
 
@@ -107,15 +123,30 @@ progress::-moz-progress-bar {
   background-color: #fea510;
 }
 
-/* .progress-bar { */
-/*   width: 50%; */
-/* } */
-
 .site-name {
+  width: 50%;
+}
+
+.site-name-sticked {
   position: absolute;
   transform: translate(60px, -10px);
 }
 
+.small-btn {
+  background-color: #37373f;
+  border-radius: 3px;
+  color: #f0ebe9;
+  padding: 4px 11px;
+}
+
+.small-btn:disabled {
+
+}
+
 .time-spent {
   width: 20%;
-}   
+}
+
+.title {
+
+}
