@@ -210,7 +210,7 @@ function addWebsite(newDomain, newDomainName){
 
 
 /**
- * Gets websites array from DB.
+ * Gets websites array from DB and filters it if needed.
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if(request.action === "getAllWebsites"){
@@ -234,6 +234,66 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       query.onerror = (event) => {
         console.error(`getAllWebsites error: ${event.target.error?.message}`);
+        sendResponse({result: []});
+      }
+    }).catch((error) => {
+      sendResponse({websites: []});
+    });
+    return true;
+  }
+  else if(request.action === "getWebsitesNoLimits"){
+    createDB().then((db) => {
+      const query = db.transaction("visitedWebsitesList", "readwrite")
+        .objectStore("visitedWebsitesList")
+        .index("spentTimeRatio")
+        .openCursor(null, "prev");
+
+      const results = [];
+      query.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor){
+          if (!cursor.value.wL_limitEnabled){
+            results.push(cursor.value);
+          }
+          cursor.continue();
+        }
+        else{
+          websiteList = results;
+          sendResponse({result: websiteList});
+        }
+      }
+      query.onerror = (event) => {
+        console.error(`getWebsitesNoLimits error: ${event.target.error?.message}`);
+        sendResponse({result: []});
+      }
+    }).catch((error) => {
+      sendResponse({websites: []});
+    });
+    return true;
+  }
+  else if(request.action === "getWebsitesWithLimits"){
+    createDB().then((db) => {
+      const query = db.transaction("visitedWebsitesList", "readwrite")
+        .objectStore("visitedWebsitesList")
+        .index("spentTimeRatio")
+        .openCursor(null, "prev");
+
+      const results = [];
+      query.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (cursor){
+          if (cursor.value.wL_limitEnabled){
+            results.push(cursor.value);
+          }
+          cursor.continue();
+        }
+        else{
+          websiteList = results;
+          sendResponse({result: websiteList});
+        }
+      }
+      query.onerror = (event) => {
+        console.error(`getWebsitesNoLimits error: ${event.target.error?.message}`);
         sendResponse({result: []});
       }
     }).catch((error) => {

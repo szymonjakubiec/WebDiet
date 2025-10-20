@@ -40,6 +40,18 @@ body {
   background-color: #37373f;
 }
 
+.bottom-bar {
+  display: flex;
+  justify-content: center;
+}
+
+.bottom-btn {
+  background-color: #37373f;
+  border-radius: 3px;
+  color: #f0ebe9;
+  padding: 7px 38px;
+}
+
 .element {
   display: flex;
   font-size: 14px;
@@ -61,27 +73,10 @@ body {
 }
 
 .main {
-  padding: 0 3px;
-  overflow-y: scroll;
-  height: 200px;
-  
-  /* Firefox */
-  scrollbar-width: thin;
-  scrollbar-color: #37373f #434343;
-}
-
-/* The rest */
-.main::-webkit-scrollbar {
-  width: 5px;
-}
-
-.main::-webkit-scrollbar-track {
-  background: #37373f;
-}
-
-.main::-webkit-scrollbar-thumb {
-  background-color: #434343;
-  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 3px;
 }
 
 .navbar {
@@ -149,4 +144,32 @@ progress::-moz-progress-bar {
 
 .title {
 
+}
+
+.website-list {
+  padding: 0 3px;
+  overflow-y: scroll;
+  height: 194px;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #37373f #434343;
+}
+
+.website-list--limits {
+  height: 146px;
+}
+
+/* The rest */
+.website-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.website-list::-webkit-scrollbar-track {
+  background: #37373f;
+}
+
+.website-list::-webkit-scrollbar-thumb {
+  background-color: #434343;
+  border-radius: 10px;
 }

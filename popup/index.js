@@ -6,13 +6,15 @@ showUsage();
 
 
 /**
- * Displays all websites
+ * Displays all websites.
  * @param websiteList
  */
 function renderAllWebsites(websiteList) {
   // brać jeszcze z website limits
   console.log(websiteList);
-  const divMain = document.getElementsByClassName("main")[0];
+  const divWebList = document.getElementsByClassName("website-list")[0];
+  divWebList.classList.remove("website-list--limits");
+  divWebList.innerHTML = "";
   const websitesNumber = websiteList.length;
   let li = "";
   
@@ -43,13 +45,22 @@ function renderAllWebsites(websiteList) {
       </div>
     </li>`
   }
-  divMain.innerHTML = `<ul id="list"> ${li} </ul>`
+  divWebList.insertAdjacentHTML(`afterbegin`, `<ul id="list"> ${li} </ul>`);
+  
+  const divBottombar = document.getElementsByClassName("bottom-bar")[0];
+  divBottombar.innerHTML = "";
 }
 
-
-function renderAllLimits(websiteList, limitList){
+/**
+ * Displays all websites without limits with buttons to add new limits and 1 edit button do modify existing limits.
+ * @param websiteList
+ * @param limitList
+ */
+function renderAllSettings(websiteList, limitList){
   console.log(websiteList);
-  const divMain = document.getElementsByClassName("main")[0];
+  const divWebList = document.getElementsByClassName("website-list")[0];
+  divWebList.classList.add("website-list--limits");
+  divWebList.innerHTML = "";
   const limitsNumber = websiteList.length;
   let li = "";
 
@@ -76,17 +87,80 @@ function renderAllLimits(websiteList, limitList){
       </div>
     </li>`
   }
-  divMain.innerHTML = `<ul id="list"> ${li} </ul>`
+  divWebList.insertAdjacentHTML("afterbegin",`<ul id="list"> ${li} </ul>`);
+  
+  const divBottombar = document.getElementsByClassName("bottom-bar")[0];
+  divBottombar.innerHTML = "";
+  divBottombar.insertAdjacentHTML("afterbegin", 
+    `<button id="add-btn" class="bottom-btn">Add</button>
+<button id="edit-btn" class="bottom-btn">Edit</button>`);
+  
+  document.getElementById("edit-btn").addEventListener("click", showLimitedWebsites);
+}
+
+/**
+ * Displays all websites with limits with buttons to edit existing limits and back button.
+ * @param websiteList
+ * @param limitList
+ */
+function renderLimitedWebsites(websiteList, limitList){
+  console.log(websiteList);
+  const divWebList = document.getElementsByClassName("website-list")[0];
+  // divWebList.classList.add("website-list--limits");
+  divWebList.innerHTML = "";
+  const limitsNumber = websiteList.length;
+  let li = "";
+
+
+  for (let i = 0; i < limitsNumber; i++) {
+    const name = websiteList[i].name;
+    const limitTime = websiteList[i].wL_limitTime;
+
+    const limitTimeCut = limitTime.substring(0, limitTime.length-3); // 02:00 czy 02:00:00?
+
+    li += `
+    <li>
+      <div class="element">
+        <img src="../img/icon16.png" alt="web-im">
+        <div class="site-name">
+          ${name}
+        </div>
+        <div class="time-spent">
+          ${limitTimeCut}
+        </div>
+        <button class="small-btn"> 
+          Edit
+        </button>
+      </div>
+    </li>`
+  }
+  divWebList.insertAdjacentHTML("afterbegin",`<ul id="list"> ${li} </ul>`);
+
+  const divBottombar = document.getElementsByClassName("bottom-bar")[0];
+  divBottombar.innerHTML = "";
+  divBottombar.insertAdjacentHTML("afterbegin", `<button id="back-btn" class="bottom-btn">Back</button>`);
+  
+  document.getElementById("back-btn").addEventListener("click", showSettings);
 }
 
 
 /**
- * Sends request message for all website's limits and then displays them.
+ * Sends request message for all websites with limits and then displays them.
  * @returns {Promise<void>}
  */
-async function showLimits(){
-  const response = await chrome.runtime.sendMessage({action: "getAllWebsites"});
-  renderAllLimits(response.result);
+async function showLimitedWebsites(){
+  const response = await chrome.runtime.sendMessage({action: "getWebsitesWithLimits"});
+  renderLimitedWebsites(response.result);
+}
+
+
+/**
+ * Sends request message for all websites without limits and then displays them.
+ * @returns {Promise<void>}
+ */
+async function showSettings(){
+  const response = await chrome.runtime.sendMessage({action: "getWebsitesNoLimits"});
+  renderAllSettings(response.result);
 }
 
 
@@ -108,8 +182,8 @@ async function showUsage(){
 
 /* =====================================  listeners ===================================== */
 
+document.getElementById("settings-btn").addEventListener("click", showSettings);
 document.getElementById("usage-btn").addEventListener("click", showUsage);
-document.getElementById("options-btn").addEventListener("click", showLimits);
 
 chrome.runtime.onMessage.addListener((request) => {
   if (request.action === "renderAllWebsites"){
